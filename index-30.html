@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Studio</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #F7F5F0;
+      --surface: #EDEAE3;
+      --border: #D4CFC6;
+      --text: #1A1917;
+      --muted: #7A766E;
+      --accent: #2D6A4F;
+      --accent-dim: #2D6A4F22;
+      --danger: #B85C38;
+      --radius: 4px;
+      --mono: 'IBM Plex Mono', monospace;
+      --serif: 'Lora', serif;
+    }
+
+    [data-theme="dark"] {
+      --bg: #141412;
+      --surface: #1E1D1A;
+      --border: #2E2D29;
+      --text: #E8E4DC;
+      --muted: #7A766E;
+      --accent: #52B788;
+      --accent-dim: #52B78822;
+      --danger: #E07A5F;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--serif);
+      font-size: 17px;
+      line-height: 1.6;
+      transition: background 0.3s, color 0.3s;
+      min-height: 100vh;
+    }
+
+    /* ── Layout ── */
+    .app { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 0 16px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 40px;
+    }
+
+    .wordmark {
+      font-family: var(--mono);
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .nav {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .nav-btn {
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .nav-btn:hover { color: var(--text); border-color: var(--text); }
+    .nav-btn.active { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+
+    .theme-toggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 16px;
+      padding: 4px 8px;
+      border-radius: var(--radius);
+      transition: color 0.15s;
+    }
+    .theme-toggle:hover { color: var(--text); }
+
+    /* ── Views ── */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* ── Journal ── */
+    .journal-header {
+      display: flex;
+      align-items: baseline;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .date-label {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+    }
+
+    .timer-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .timer-display {
+      font-family: var(--mono);
+      font-size: 42px;
+      font-weight: 500;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      min-width: 120px;
+    }
+
+    .timer-display.running { color: var(--accent); }
+    .timer-display.done { color: var(--danger); }
+
+    .timer-controls { display: flex; gap: 8px; align-items: center; }
+
+    .btn {
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 8px 18px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+
+    .btn:hover { border-color: var(--text); }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover { opacity: 0.88; }
+
+    .btn-ghost { border-color: transparent; color: var(--muted); }
+    .btn-ghost:hover { color: var(--text); border-color: var(--border); }
+
+    select.duration-select {
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--muted);
+      border-radius: var(--radius);
+      cursor: pointer;
+    }
+
+    .writing-area {
+      width: 100%;
+      min-height: 340px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      font-family: var(--serif);
+      font-size: 17px;
+      line-height: 1.7;
+      color: var(--text);
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .writing-area:focus { border-color: var(--accent); }
+    .writing-area::placeholder { color: var(--muted); font-style: italic; }
+
+    .writing-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+    }
+
+    .word-count {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ── Projects ── */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .project-list { display: flex; flex-direction: column; gap: 2px; }
+
+    .project-row {
+      display: grid;
+      grid-template-columns: 1fr 130px 160px auto;
+      gap: 16px;
+      align-items: center;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid transparent;
+      border-radius: var(--radius);
+      transition: border-color 0.15s;
+    }
+
+    .project-row:hover { border-color: var(--border); }
+
+    .project-title {
+      font-family: var(--serif);
+      font-size: 16px;
+      color: var(--text);
+      background: transparent;
+      border: none;
+      outline: none;
+      width: 100%;
+      font-weight: 500;
+    }
+
+    .project-field {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid transparent;
+      outline: none;
+      width: 100%;
+      transition: border-color 0.15s;
+    }
+
+    .project-field:focus { border-bottom-color: var(--accent); color: var(--text); }
+    .project-title:focus { border-bottom: 1px solid var(--accent); }
+
+    .project-actions { display: flex; gap: 6px; }
+
+    .link-btn {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 5px 10px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      border-radius: var(--radius);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .link-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      color: var(--border);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 4px 6px;
+      border-radius: var(--radius);
+      transition: color 0.15s;
+    }
+    .delete-btn:hover { color: var(--danger); }
+
+    .project-headers {
+      display: grid;
+      grid-template-columns: 1fr 130px 160px auto;
+      gap: 16px;
+      padding: 0 16px 8px;
+    }
+
+    .col-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ── Stats ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    .stat-value {
+      font-family: var(--mono);
+      font-size: 32px;
+      font-weight: 500;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .stat-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .log-table { width: 100%; border-collapse: collapse; }
+    .log-table th {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: left;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .log-table td {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text);
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .log-table td.muted { color: var(--muted); }
+
+    /* ── Save toast ── */
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--accent);
+      color: #fff;
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      padding: 10px 24px;
+      border-radius: 20px;
+      opacity: 0;
+      transition: all 0.3s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── Empty state ── */
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 13px;
+    }
+
+    @media (max-width: 640px) {
+      .project-row { grid-template-columns: 1fr auto; }
+      .project-field { display: none; }
+      .project-headers { display: none; }
+    }
+  </style>
+</head>
+<body data-theme="light">
+<div class="app">
+
+  <div class="topbar">
+    <span class="wordmark">Studio</span>
+    <div class="nav">
+      <button class="nav-btn active" onclick="showView('journal')">Write</button>
+      <button class="nav-btn" onclick="showView('projects')">Projects</button>
+      <button class="nav-btn" onclick="showView('stats')">Log</button>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">◐</button>
+    </div>
+  </div>
+
+  <!-- ── Journal View ── -->
+  <div id="view-journal" class="view active">
+    <div class="journal-header">
+      <span class="date-label" id="today-date"></span>
+    </div>
+
+    <div class="timer-row">
+      <div class="timer-display" id="timer-display">20:00</div>
+      <div class="timer-controls">
+        <button class="btn btn-primary" id="play-btn" onclick="toggleTimer()">Play</button>
+        <button class="btn btn-ghost" onclick="resetTimer()">Reset</button>
+        <select class="duration-select" id="duration-select" onchange="setDuration(this.value)">
+          <option value="15">15 min</option>
+          <option value="20" selected>20 min</option>
+          <option value="25">25 min</option>
+          <option value="30">30 min</option>
+          <option value="45">45 min</option>
+          <option value="60">60 min</option>
+        </select>
+      </div>
+    </div>
+
+    <textarea
+      class="writing-area"
+      id="writing-area"
+      placeholder="Begin when you're ready."
+      oninput="updateWordCount()"
+    ></textarea>
+
+    <div class="writing-footer">
+      <span class="word-count" id="word-count">0 words</span>
+      <button class="btn btn-primary" onclick="saveEntry()">Save entry</button>
+    </div>
+  </div>
+
+  <!-- ── Projects View ── -->
+  <div id="view-projects" class="view">
+    <div class="section-header">
+      <span class="section-title">Projects</span>
+      <button class="btn btn-primary" onclick="addProject()">+ Add</button>
+    </div>
+
+    <div class="project-headers">
+      <span class="col-label">Title</span>
+      <span class="col-label">Deadline</span>
+      <span class="col-label">Contact</span>
+      <span class="col-label"></span>
+    </div>
+
+    <div class="project-list" id="project-list"></div>
+  </div>
+
+  <!-- ── Stats View ── -->
+  <div id="view-stats" class="view">
+    <div class="section-header">
+      <span class="section-title">Writing log</span>
+    </div>
+
+    <div class="stats-grid" id="stats-grid"></div>
+
+    <table class="log-table" id="log-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Words</th>
+          <th>Time</th>
+          <th>Type</th>
+        </tr>
+      </thead>
+      <tbody id="log-body"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── State ──
+  let timerInterval = null;
+  let timerRunning = false;
+  let timerDuration = 20 * 60;
+  let timerRemaining = 20 * 60;
+  let sessionStartTime = null;
+
+  const STORAGE_KEY = 'studio_v1';
+
+  function loadData() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { projects: [], log: [] };
+    } catch { return { projects: [], log: [] }; }
+  }
+
+  function saveData(data) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+
+  // ── Theme ──
+  function toggleTheme() {
+    const body = document.body;
+    body.dataset.theme = body.dataset.theme === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('studio_theme', body.dataset.theme);
+  }
+
+  // ── Views ──
+  function showView(name) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    event.target.classList.add('active');
+    if (name === 'projects') renderProjects();
+    if (name === 'stats') renderStats();
+  }
+
+  // ── Date ──
+  function formatDate(d) {
+    return d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  // ── Timer ──
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function displayTimer(secs) {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    document.getElementById('timer-display').textContent = pad(m) + ':' + pad(s);
+  }
+
+  function setDuration(mins) {
+    timerDuration = mins * 60;
+    timerRemaining = timerDuration;
+    displayTimer(timerRemaining);
+    if (timerRunning) stopTimer();
+    document.getElementById('timer-display').className = 'timer-display';
+  }
+
+  function toggleTimer() {
+    if (timerRunning) {
+      stopTimer();
+    } else {
+      startTimer();
+    }
+  }
+
+  function startTimer() {
+    if (timerRemaining <= 0) { timerRemaining = timerDuration; }
+    timerRunning = true;
+    sessionStartTime = sessionStartTime || Date.now();
+    document.getElementById('play-btn').textContent = 'Pause';
+    document.getElementById('timer-display').classList.add('running');
+    timerInterval = setInterval(() => {
+      timerRemaining--;
+      displayTimer(timerRemaining);
+      if (timerRemaining <= 0) {
+        clearInterval(timerInterval);
+        timerRunning = false;
+        document.getElementById('play-btn').textContent = 'Play';
+        document.getElementById('timer-display').className = 'timer-display done';
+        showToast('Time's up');
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    document.getElementById('play-btn').textContent = 'Play';
+    document.getElementById('timer-display').classList.remove('running');
+  }
+
+  function resetTimer() {
+    stopTimer();
+    timerRemaining = timerDuration;
+    sessionStartTime = null;
+    displayTimer(timerRemaining);
+    document.getElementById('timer-display').className = 'timer-display';
+  }
+
+  // ── Word count ──
+  function countWords(text) {
+    return text.trim() ? text.trim().split(/\s+/).length : 0;
+  }
+
+  function updateWordCount() {
+    const n = countWords(document.getElementById('writing-area').value);
+    document.getElementById('word-count').textContent = n + (n === 1 ? ' word' : ' words');
+  }
+
+  // ── Save entry ──
+  function saveEntry() {
+    const text = document.getElementById('writing-area').value.trim();
+    if (!text) { showToast('Nothing to save yet'); return; }
+
+    const words = countWords(text);
+    const now = new Date();
+    const elapsed = sessionStartTime ? Math.round((Date.now() - sessionStartTime) / 60000) : null;
+
+    const data = loadData();
+    data.log.push({
+      date: now.toISOString(),
+      words,
+      minutes: elapsed,
+      type: 'journal',
+      text
+    });
+    saveData(data);
+
+    // Download as text file
+    const filename = 'journal-' + now.toISOString().slice(0, 10) + '.txt';
+    const blob = new Blob([text], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+
+    document.getElementById('writing-area').value = '';
+    updateWordCount();
+    resetTimer();
+    showToast('Saved — ' + words + ' words');
+  }
+
+  // ── Projects ──
+  function renderProjects() {
+    const data = loadData();
+    const list = document.getElementById('project-list');
+    if (!data.projects.length) {
+      list.innerHTML = '<div class="empty">No projects yet. Add one above.</div>';
+      return;
+    }
+    list.innerHTML = data.projects.map((p, i) => `
+      <div class="project-row" id="proj-${i}">
+        <input class="project-title" value="${esc(p.title)}" placeholder="Project title"
+          onchange="updateProject(${i}, 'title', this.value)" />
+        <input class="project-field" value="${esc(p.deadline)}" placeholder="Deadline"
+          onchange="updateProject(${i}, 'deadline', this.value)" />
+        <input class="project-field" value="${esc(p.contact)}" placeholder="Contact"
+          onchange="updateProject(${i}, 'contact', this.value)" />
+        <div class="project-actions">
+          ${p.driveUrl
+            ? `<a class="link-btn" href="${esc(p.driveUrl)}" target="_blank">Drive ↗</a>`
+            : `<button class="link-btn" onclick="setDriveLink(${i})">+ Drive</button>`
+          }
+          <button class="delete-btn" onclick="deleteProject(${i})" title="Delete">×</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function addProject() {
+    const data = loadData();
+    data.projects.push({ title: '', deadline: '', contact: '', driveUrl: '' });
+    saveData(data);
+    renderProjects();
+    // Focus the new title
+    const rows = document.querySelectorAll('.project-row');
+    if (rows.length) rows[rows.length - 1].querySelector('.project-title').focus();
+  }
+
+  function updateProject(i, field, value) {
+    const data = loadData();
+    data.projects[i][field] = value;
+    saveData(data);
+  }
+
+  function deleteProject(i) {
+    if (!confirm('Remove this project?')) return;
+    const data = loadData();
+    data.projects.splice(i, 1);
+    saveData(data);
+    renderProjects();
+  }
+
+  function setDriveLink(i) {
+    const url = prompt('Paste Google Drive folder URL:');
+    if (!url) return;
+    updateProject(i, 'driveUrl', url);
+    renderProjects();
+  }
+
+  // ── Stats ──
+  function renderStats() {
+    const data = loadData();
+    const log = data.log;
+
+    if (!log.length) {
+      document.getElementById('stats-grid').innerHTML = '';
+      document.getElementById('log-body').innerHTML =
+        '<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--muted);font-family:var(--mono);font-size:13px;">No entries yet.</td></tr>';
+      return;
+    }
+
+    const now = new Date();
+    const thisMonth = log.filter(e => {
+      const d = new Date(e.date);
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+
+    const totalWords = log.reduce((s, e) => s + e.words, 0);
+    const monthWords = thisMonth.reduce((s, e) => s + e.words, 0);
+    const totalSessions = log.length;
+    const totalMins = log.filter(e => e.minutes).reduce((s, e) => s + e.minutes, 0);
+
+    document.getElementById('stats-grid').innerHTML = `
+      <div class="stat-card">
+        <div class="stat-value">${monthWords.toLocaleString()}</div>
+        <div class="stat-label">Words this month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${totalWords.toLocaleString()}</div>
+        <div class="stat-label">Words total</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${totalSessions}</div>
+        <div class="stat-label">Sessions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${totalMins}</div>
+        <div class="stat-label">Minutes written</div>
+      </div>
+    `;
+
+    const sorted = [...log].sort((a, b) => new Date(b.date) - new Date(a.date));
+    document.getElementById('log-body').innerHTML = sorted.map(e => `
+      <tr>
+        <td>${new Date(e.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+        <td>${e.words}</td>
+        <td class="muted">${e.minutes ? e.minutes + ' min' : '—'}</td>
+        <td class="muted">${e.type}</td>
+      </tr>
+    `).join('');
+  }
+
+  // ── Toast ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  function esc(str) {
+    return (str || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  }
+
+  // ── Init ──
+  document.getElementById('today-date').textContent = formatDate(new Date());
+  displayTimer(timerRemaining);
+
+  const savedTheme = localStorage.getItem('studio_theme');
+  if (savedTheme) document.body.dataset.theme = savedTheme;
+</script>
+</body>
+</html>
